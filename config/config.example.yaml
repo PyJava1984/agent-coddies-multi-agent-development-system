@@ -1,0 +1,115 @@
+# agent-coddies — behaviour. No secrets here; this file is safe to commit.
+# Copy to config/config.yaml to override, or edit in place.
+
+workflow:
+  # How many dev→qa→dev rounds before giving up and reporting to the user.
+  max_fix_iterations: 3
+  # Where the run ledger and artefacts live, relative to the repo root.
+  state_dir: .coddies
+  # Ask the user before coddie-ship pushes / opens the MR / updates Jira.
+  require_approval_before_ship: true
+  # Stop the pipeline if QA leaves a finding of this severity or worse open.
+  block_ship_on_severity: high
+
+jira:
+  project_prefix: HM
+  # Status coddie-ship moves the ticket to once the MR is open.
+  transition_on_mr: In Review
+  # Status to move to when work starts (blank = don't transition).
+  transition_on_start: In Progress
+  # Fields pulled by `jira get`.
+  fields:
+    - summary
+    - description
+    - status
+    - issuetype
+    - priority
+    - assignee
+    - labels
+    - components
+    - fixVersions
+    - issuelinks
+    - subtasks
+    - attachment
+
+gitlab:
+  default_target_branch: main
+  protected_branches: [main, master, develop, release]
+  # {ticket} and {slug} are substituted.
+  branch_pattern: "{ticket}-{slug}"
+  mr_title_pattern: "{ticket}: {summary}"
+  default_labels: []
+  default_reviewers: []
+  squash_on_merge: true
+  remove_source_branch: true
+  # Wait this many seconds for the pipeline to report a first status (0 = don't wait).
+  pipeline_wait_seconds: 0
+
+git:
+  commit_template: |
+    {ticket} {type}: {summary}
+
+    {body}
+
+    Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+  # Allowed {type} values.
+  commit_types: [Feature, Fix, Refactor, Chore, Docs, Test, Perf, Build]
+
+testing:
+  # smoke | standard | deep
+  default_depth: standard
+  default_environment: dev
+  playwright:
+    enabled: true
+    browsers: [chromium, firefox]
+    headed: false
+    workers: 4
+    retries: 1
+    trace: retain-on-failure
+    timeout_ms: 30000
+  selenium:
+    enabled: true
+    browsers: [chrome]
+    headless: true
+    implicit_wait_seconds: 0
+    page_load_timeout_seconds: 30
+    # Optional Selenium Grid / Selenoid endpoint. Blank = local driver.
+    remote_url: ""
+  # Commands tried, in order, to run the project's own suite. First hit wins.
+  unit_test_commands:
+    - "npm test --silent"
+    - "pnpm test"
+    - "yarn test"
+    - "pytest -q"
+    - "mvn -q test"
+    - "./gradlew test"
+    - "dotnet test"
+
+design:
+  # Have coddie-dev produce a Claude Design canvas before building UI.
+  canvas_before_ui: true
+  # Skip the canvas for changes smaller than this many touched UI files.
+  skip_canvas_under_files: 2
+
+security:
+  # Patterns coddie-ship scans the diff for before pushing.
+  secret_patterns:
+    - "(?i)api[_-]?key\s*[:=]\s*['\"][A-Za-z0-9_\-]{16,}"
+    - "(?i)(password|passwd|pwd)\s*[:=]\s*['\"][^'\"]{6,}"
+    - "(?i)secret\s*[:=]\s*['\"][^'\"]{8,}"
+    - "-----BEGIN (RSA |EC |OPENSSH |PGP )?PRIVATE KEY-----"
+    - "glpat-[A-Za-z0-9_\-]{20,}"
+    - "ghp_[A-Za-z0-9]{36}"
+    - "xox[baprs]-[A-Za-z0-9-]{10,}"
+    - "AKIA[0-9A-Z]{16}"
+    - "(?i)bearer\s+[A-Za-z0-9._\-]{24,}"
+    - "(?i)(jdbc|mongodb(\+srv)?|postgres(ql)?|mysql)://[^\s'\"]*:[^\s'\"@]+@"
+  # Paths that must never be committed by this pipeline.
+  never_commit:
+    - "**/credentials.yaml"
+    - "**/.env"
+    - "**/.env.*"
+    - "**/*.pem"
+    - "**/*.p12"
+    - "**/*.pfx"
+    - "**/id_rsa*"

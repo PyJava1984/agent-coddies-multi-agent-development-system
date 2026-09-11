@@ -1,0 +1,19 @@
+# agent-coddies — everything here is optional.
+# The CLI runs on a bare Python 3.9+ (urllib + a built-in YAML reader).
+# Install what your situation needs.
+
+# Recommended: full YAML support and a better HTTP stack
+PyYAML>=6.0
+requests>=2.31
+
+# Testing (coddie-qa)
+pytest>=7.4
+playwright>=1.44          # then: python -m playwright install
+pytest-playwright>=0.5    # only for the Python Playwright runner
+selenium>=4.20            # 4.6+ resolves drivers itself, no webdriver-manager
+
+# Database introspection (coddie-dev) — install only your dialect
+# psycopg2-binary>=2.9     # postgres
+# pymysql>=1.1             # mysql / mariadb
+# oracledb>=2.2            # oracle
+# pyodbc>=5.1              # sqlserver
