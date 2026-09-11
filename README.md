@@ -1,4 +1,4 @@
-What this is. A Claude Code skill that carries an HM ticket from assigned to merge request open for review, using three specialist subagents. You approve the scope at the start and the delivery at the end; the build–test–fix loop in between runs on its own.
+What this is. A Claude Code skill that carries an jira ticket from assigned to merge request open for review, using three specialist subagents. You approve the scope at the start and the delivery at the end; the build–test–fix loop in between runs on its own.
 
 # Agent Coddies
 
